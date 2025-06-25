@@ -1,0 +1,128 @@
+name: Issue Auto Labeler
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Auto Label Issue
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { data: issue } = await github.rest.issues.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+
+          const title = issue.title.toLowerCase();
+          const body = issue.body ? issue.body.toLowerCase() : '';
+          let labels = new Set();
+
+          // 이슈 타입에 따른 라벨링
+          if (title.includes('bug') || title.includes('error') || title.includes('문제') ||
+              title.includes('오류') || body.includes('error') || body.includes('문제')) {
+            labels.add('bug');
+          }
+
+          if (title.includes('feature') || title.includes('기능') || title.includes('요청') ||
+              body.includes('feature') || body.includes('기능')) {
+            labels.add('enhancement');
+          }
+
+          if (title.includes('question') || title.includes('질문') || title.includes('도움') ||
+              body.includes('question') || body.includes('질문')) {
+            labels.add('question');
+          }
+
+          if (title.includes('doc') || title.includes('문서') || 
+              body.includes('documentation') || body.includes('문서')) {
+            labels.add('documentation');
+          }
+
+          // 컴포넌트별 라벨링
+          if (title.includes('backend') || body.includes('backend') || 
+              title.includes('api') || body.includes('api') ||
+              title.includes('server') || body.includes('server')) {
+            labels.add('backend');
+          }
+
+          if (title.includes('frontend') || body.includes('frontend') || 
+              title.includes('ui') || body.includes('ui') ||
+              title.includes('interface') || body.includes('인터페이스')) {
+            labels.add('frontend');
+          }
+
+          if (title.includes('database') || body.includes('database') ||
+              title.includes('db') || body.includes('데이터베이스')) {
+            labels.add('database');
+          }
+
+          if (title.includes('test') || body.includes('test') ||
+              title.includes('테스트') || body.includes('테스트')) {
+            labels.add('test');
+          }
+
+          // 우선순위 라벨링
+          if (title.includes('critical') || title.includes('urgent') ||
+              title.includes('긴급') || title.includes('중요') ||
+              body.includes('critical') || body.includes('urgent')) {
+            labels.add('priority: high');
+          } else if (title.includes('low') || title.includes('낮음') ||
+                     body.includes('low priority')) {
+            labels.add('priority: low');
+          } else {
+            labels.add('priority: medium');
+          }
+
+          // 상태 라벨
+          labels.add('status: todo');
+
+          // 보안 관련
+          if (title.includes('security') || body.includes('security') ||
+              title.includes('보안') || body.includes('보안') ||
+              title.includes('vulnerability') || body.includes('취약점')) {
+            labels.add('security');
+            labels.add('priority: high'); // 보안 이슈는 높은 우선순위
+          }
+
+          // 성능 관련
+          if (title.includes('performance') || body.includes('performance') ||
+              title.includes('성능') || body.includes('성능') ||
+              title.includes('slow') || title.includes('느림')) {
+            labels.add('performance');
+          }
+
+          // 도움 요청
+          if (title.includes('help') || title.includes('support') ||
+              title.includes('도움') || body.includes('help wanted')) {
+            labels.add('help wanted');
+          }
+
+          // 첫 번째 기여자
+          const { data: issueEvents } = await github.rest.issues.listEventsForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            per_page: 100
+          });
+
+          const userIssues = issueEvents.filter(event => 
+            event.actor && event.actor.login === issue.user.login
+          );
+
+          if (userIssues.length <= 1) {
+            labels.add('good first issue');
+          }
+
+          // 라벨 적용
+          if (labels.size > 0) {
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: Array.from(labels)
+            });
+          } 

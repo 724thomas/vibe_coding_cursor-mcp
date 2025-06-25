@@ -1,0 +1,109 @@
+name: PR Auto Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Auto Code Review
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { data: pullRequest } = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number,
+          });
+
+          const { data: files } = await github.rest.pulls.listFiles({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number,
+          });
+
+          let reviewComments = [];
+          let suggestions = [];
+
+          // 파일별 자동 리뷰 체크
+          for (const file of files) {
+            // Python 파일에 대한 기본 체크
+            if (file.filename.endsWith('.py')) {
+              if (file.patch) {
+                const lines = file.patch.split('\n');
+                let lineNumber = 0;
+
+                for (let i = 0; i < lines.length; i++) {
+                  const line = lines[i];
+                  
+                  // 새로 추가된 라인만 체크 (+ 로 시작)
+                  if (line.startsWith('+') && !line.startsWith('+++')) {
+                    lineNumber++;
+                    
+                    // 코딩 컨벤션 체크
+                    if (line.includes('print(') && !file.filename.includes('test')) {
+                      suggestions.push(`🔍 **${file.filename}**: print 문이 발견되었습니다. 로깅을 사용하는 것이 좋습니다.`);
+                    }
+                    
+                    if (line.length > 127) {
+                      suggestions.push(`📏 **${file.filename}**: 라인이 너무 깁니다 (${line.length}자). 127자 이하로 줄이는 것이 좋습니다.`);
+                    }
+                    
+                    if (line.includes('TODO') || line.includes('FIXME')) {
+                      suggestions.push(`📝 **${file.filename}**: TODO/FIXME가 발견되었습니다. 이슈를 생성하여 추적하는 것을 고려해보세요.`);
+                    }
+                  }
+                }
+              }
+            }
+
+            // 테스트 파일 관련 체크
+            if (file.filename.includes('test') || file.filename.startsWith('tests/')) {
+              if (file.status === 'removed') {
+                suggestions.push(`⚠️ **테스트 파일 삭제**: ${file.filename}이 삭제되었습니다. 관련 기능이 여전히 테스트되는지 확인해주세요.`);
+              }
+            }
+          }
+
+          // 보안 관련 체크
+          const securityPatterns = [
+            { pattern: /password\s*=\s*['"'][^'"]+['"]/, message: '하드코딩된 패스워드가 발견될 수 있습니다.' },
+            { pattern: /api_key\s*=\s*['"'][^'"]+['"]/, message: '하드코딩된 API 키가 발견될 수 있습니다.' },
+            { pattern: /secret\s*=\s*['"'][^'"]+['"]/, message: '하드코딩된 시크릿이 발견될 수 있습니다.' }
+          ];
+
+          files.forEach(file => {
+            if (file.patch) {
+              securityPatterns.forEach(({ pattern, message }) => {
+                if (pattern.test(file.patch)) {
+                  suggestions.push(`🔒 **보안 주의**: ${file.filename}에서 ${message}`);
+                }
+              });
+            }
+          });
+
+          // 리뷰 댓글 생성
+          if (suggestions.length > 0) {
+            const reviewBody = `
+## 🤖 자동 코드 리뷰
+
+다음 사항들을 검토해보세요:
+
+${suggestions.map(s => `- ${s}`).join('\n')}
+
+---
+**참고**: 이는 자동 생성된 리뷰입니다. 모든 제안사항이 반드시 수정되어야 하는 것은 아닙니다.
+            `;
+
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              body: reviewBody,
+              event: 'COMMENT'
+            });
+          } 

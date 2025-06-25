@@ -1,0 +1,82 @@
+name: Issue Auto Assigner
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  assign:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Auto Assign Issue
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { data: issue } = await github.rest.issues.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+
+          const title = issue.title.toLowerCase();
+          const body = issue.body ? issue.body.toLowerCase() : '';
+          let assignees = new Set();
+
+          // 이슈 타입 및 내용에 따른 담당자 할당
+          if (title.includes('backend') || body.includes('backend') || 
+              title.includes('api') || body.includes('api') ||
+              title.includes('server') || body.includes('server')) {
+            // 백엔드 관련 이슈
+            // assignees.add('backend-maintainer');
+          }
+
+          if (title.includes('frontend') || body.includes('frontend') || 
+              title.includes('ui') || body.includes('ui') ||
+              title.includes('interface') || body.includes('인터페이스')) {
+            // 프론트엔드 관련 이슈
+            // assignees.add('frontend-maintainer');
+          }
+
+          if (title.includes('test') || body.includes('test') ||
+              title.includes('테스트') || body.includes('테스트')) {
+            // 테스트 관련 이슈
+            // assignees.add('qa-maintainer');
+          }
+
+          if (title.includes('doc') || body.includes('documentation') ||
+              title.includes('문서') || body.includes('문서')) {
+            // 문서 관련 이슈
+            // assignees.add('docs-maintainer');
+          }
+
+          if (title.includes('security') || body.includes('security') ||
+              title.includes('보안') || body.includes('보안')) {
+            // 보안 관련 이슈
+            // assignees.add('security-maintainer');
+          }
+
+          // 우선순위가 높은 이슈는 프로젝트 리더에게 할당
+          if (title.includes('critical') || title.includes('urgent') ||
+              title.includes('긴급') || title.includes('중요')) {
+            // assignees.add('project-lead');
+          }
+
+          // 기본적으로 이슈 작성자는 담당자에서 제외
+          // (필요시 수동으로 할당 가능)
+          
+          // 현재는 자동 할당을 주석 처리하고, 라벨을 통해 담당자를 식별할 수 있도록 함
+          // 실제 사용 시에는 위의 주석을 해제하고 실제 GitHub 사용자명으로 변경
+
+          // 담당자 할당 (실제 사용자명이 설정되어 있을 때만)
+          const finalAssignees = Array.from(assignees).filter(assignee => 
+            assignee && assignee !== issue.user.login
+          );
+
+          if (finalAssignees.length > 0) {
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              assignees: finalAssignees
+            });
+          } 

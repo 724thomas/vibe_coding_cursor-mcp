@@ -1,0 +1,98 @@
+name: PR Auto Labeler
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Auto Label PR
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { data: pullRequest } = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number,
+          });
+
+          const { data: files } = await github.rest.pulls.listFiles({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number,
+          });
+
+          let labels = new Set();
+
+          // PR 제목과 브랜치명에 따른 라벨링
+          const title = pullRequest.title.toLowerCase();
+          const branchName = pullRequest.head.ref.toLowerCase();
+
+          if (title.includes('feat') || branchName.includes('feature')) {
+            labels.add('feature');
+          }
+          if (title.includes('fix') || branchName.includes('bugfix') || branchName.includes('hotfix')) {
+            labels.add('bug');
+          }
+          if (title.includes('refactor') || branchName.includes('refactor')) {
+            labels.add('refactor');
+          }
+          if (title.includes('test') || branchName.includes('test')) {
+            labels.add('test');
+          }
+          if (title.includes('doc') || branchName.includes('doc')) {
+            labels.add('documentation');
+          }
+
+          // 파일 변경에 따른 라벨링
+          let hasBackendChanges = false;
+          let hasFrontendChanges = false;
+          let hasTestChanges = false;
+          let hasDocsChanges = false;
+
+          files.forEach(file => {
+            if (file.filename.startsWith('backend/')) {
+              hasBackendChanges = true;
+            }
+            if (file.filename.startsWith('frontend/')) {
+              hasFrontendChanges = true;
+            }
+            if (file.filename.includes('test') || file.filename.startsWith('tests/')) {
+              hasTestChanges = true;
+            }
+            if (file.filename.startsWith('docs/') || file.filename.endsWith('.md')) {
+              hasDocsChanges = true;
+            }
+          });
+
+          if (hasBackendChanges) labels.add('backend');
+          if (hasFrontendChanges) labels.add('frontend');
+          if (hasTestChanges) labels.add('test');
+          if (hasDocsChanges) labels.add('documentation');
+
+          // 변경 크기에 따른 라벨링
+          const totalChanges = pullRequest.additions + pullRequest.deletions;
+          if (totalChanges > 500) {
+            labels.add('size: large');
+          } else if (totalChanges > 100) {
+            labels.add('size: medium');
+          } else {
+            labels.add('size: small');
+          }
+
+          // 우선순위 라벨링 (긴급 수정의 경우)
+          if (branchName.includes('hotfix') || title.includes('urgent') || title.includes('critical')) {
+            labels.add('priority: high');
+          }
+
+          // 라벨 적용
+          if (labels.size > 0) {
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: Array.from(labels)
+            });
+          } 

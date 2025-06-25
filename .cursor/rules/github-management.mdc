@@ -1,0 +1,57 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# GitHub PR 및 이슈 관리 룰
+
+## PR 관리 가이드라인
+
+### PR 생성 규칙
+1. **브랜치 명명 규칙**
+   - feature/기능명
+   - bugfix/버그명
+   - hotfix/긴급수정명
+   - refactor/리팩터링명
+
+2. **PR 제목 규칙**
+   - [타입] 간단한 설명
+   - 타입: feat, fix, refactor, test, docs, chore
+
+3. **PR 설명 필수 항목**
+   - 변경 사항 요약
+   - 테스트 방법
+   - 관련 이슈 번호 (#이슈번호)
+   - 체크리스트 (테스트 완료, 문서 업데이트 등)
+
+4. **PR 리뷰 규칙**
+   - 최소 1명 이상의 리뷰어 필수
+   - 모든 테스트 통과 필수
+   - 코드 컨벤션 준수 확인
+   - 보안 이슈 검토
+
+## 이슈 관리 가이드라인
+
+### 이슈 생성 규칙
+1. **이슈 제목 규칙**
+   - [타입] 명확한 문제 또는 요구사항 설명
+   - 타입: bug, feature, enhancement, question, documentation
+
+2. **이슈 설명 필수 항목**
+   - 문제 상황 또는 요구사항 상세 설명
+   - 재현 방법 (버그의 경우)
+   - 예상 동작 vs 실제 동작
+   - 환경 정보 (OS, Python 버전 등)
+   - 우선순위 및 예상 일정
+
+3. **라벨 분류**
+   - priority: high, medium, low
+   - type: bug, feature, enhancement, documentation
+   - status: todo, in-progress, review, done
+   - component: backend, frontend, database, api
+
+### 자동화 규칙
+- PR 생성 시 자동으로 관련 담당자 할당
+- 이슈 생성 시 자동 라벨링 및 담당자 할당
+- 코드 리뷰 자동 요청
+- 테스트 실패 시 자동 알림

@@ -1,0 +1,56 @@
+name: PR Auto Assigner
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  assign:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Auto Assign PR
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { data: pullRequest } = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number,
+          });
+
+          // 기본 담당자 설정 (저장소 소유자 또는 특정 사용자)
+          const defaultAssignees = [pullRequest.user.login]; // PR 작성자를 기본 담당자로 설정
+          
+          // 파일 경로에 따른 담당자 매핑
+          const { data: files } = await github.rest.pulls.listFiles({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number,
+          });
+
+          let assignees = new Set(defaultAssignees);
+
+          files.forEach(file => {
+            if (file.filename.startsWith('backend/')) {
+              // 백엔드 파일 변경 시 백엔드 담당자 추가
+              // assignees.add('backend-maintainer');
+            }
+            if (file.filename.startsWith('frontend/')) {
+              // 프론트엔드 파일 변경 시 프론트엔드 담당자 추가
+              // assignees.add('frontend-maintainer');
+            }
+            if (file.filename.includes('test')) {
+              // 테스트 파일 변경 시 QA 담당자 추가
+              // assignees.add('qa-maintainer');
+            }
+          });
+
+          // 담당자 할당
+          if (assignees.size > 0) {
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              assignees: Array.from(assignees).filter(assignee => assignee !== pullRequest.user.login)
+            });
+          } 
