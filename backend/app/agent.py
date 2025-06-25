@@ -8,10 +8,15 @@ from langgraph.prebuilt import create_react_agent
 def create_agent():
     """LangGraph React Agent를 생성합니다."""
     # Gemini LLM 모델 초기화
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        # 테스트 환경에서는 더미 키 사용
+        api_key = "test-api-key"
+    
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.0-flash",
         temperature=0.7,
-        google_api_key=os.getenv("GOOGLE_API_KEY")
+        google_api_key=api_key
     )
     
     # DuckDuckGo 검색 Tool 초기화
