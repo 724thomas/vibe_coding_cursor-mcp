@@ -1,3 +1,10 @@
+# Cursor와 MCP로 프로젝트 개발하기
+https://wonjoon.gitbook.io/joons-til/ai/vibecoding/project-development-using-cursor-and-mcp
+
+
+<br><br>
+<div></div>
+
 # 🤖 Vibe Coding Practice - AI 채팅 시스템
 
 > AI 기반 상품 최저가 검색 채팅 시스템을 위한 실습 프로젝트
