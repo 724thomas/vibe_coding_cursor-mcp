@@ -30,8 +30,8 @@ async def root():
 @app.get("/health")
 async def health_check():
     """헬스체크 엔드포인트"""
-    # 의도적인 버그: 정의되지 않은 변수 참조
-    server_status = undefined_variable  # NameError 발생
+    # 버그 수정: undefined_variable 제거하고 적절한 값으로 대체
+    server_status = "running"  # 정상적인 서버 상태 값
     return {"status": "healthy", "server": server_status}
 
 
