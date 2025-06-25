@@ -12,6 +12,17 @@ def test_health_check():
     assert response.json() == {"status": "healthy"}
 
 
+def test_test_endpoint():
+    """새로운 테스트 엔드포인트 테스트"""
+    response = client.get("/test")
+    assert response.status_code == 200
+    data = response.json()
+    assert "message" in data
+    assert "feature" in data
+    assert "version" in data
+    assert data["version"] == "1.0.1"
+
+
 def test_read_root():
     """루트 엔드포인트 테스트"""
     response = client.get("/")
