@@ -9,3 +9,7 @@ langchain-community>=0.0.20
 langchain-google-genai>=1.0.0
 langgraph>=0.0.40
 duckduckgo-search>=3.8.0
+langchain-openai
+langgraph-checkpoint
+beautifulsoup4
+requests

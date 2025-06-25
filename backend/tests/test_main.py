@@ -9,7 +9,9 @@ def test_health_check():
     """헬스체크 엔드포인트 테스트"""
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "healthy"}
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert data["server"] == "running"
 
 
 def test_test_endpoint():

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import chat
+from app.routers import multiturn_chat
 
 app = FastAPI(
     title="Chat API",
@@ -19,6 +20,7 @@ app.add_middleware(
 
 # 라우터 등록
 app.include_router(chat.router)
+app.include_router(multiturn_chat.router)
 
 
 @app.get("/")
