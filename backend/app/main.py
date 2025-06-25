@@ -30,4 +30,14 @@ async def root():
 @app.get("/health")
 async def health_check():
     """헬스체크 엔드포인트"""
-    return {"status": "healthy"} 
+    return {"status": "healthy"}
+
+
+@app.get("/test")
+async def test_endpoint():
+    """PR 테스트를 위한 새로운 엔드포인트"""
+    return {
+        "message": "PR 테스트 성공!",
+        "feature": "새로운 테스트 엔드포인트",
+        "version": "1.0.1"
+    } 
