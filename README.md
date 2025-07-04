@@ -1,6 +1,7 @@
 # Cursor와 MCP로 프로젝트 개발하기
 https://wonjoon.gitbook.io/joons-til/ai/vibecoding/project-development-using-cursor-and-mcp
 
+![image](https://github.com/user-attachments/assets/86782d39-c1b6-4e32-a7da-3b91c3c24099)
 
 <br><br>
 <div></div>
